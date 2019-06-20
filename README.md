@@ -1,5 +1,5 @@
 # LstmWordPredictor
-LSTM + Word Embedding 实现诗词生成（预测）
+Word Embedding + LSTM 模型生成（预测）诗词
 
 ### Train data:
     寒随穷律变，春逐鸟声开。初风飘带柳，晚雪间花梅。碧林青旧竹，绿沼翠新苔。芝田初雁去，绮树巧莺来。
@@ -20,3 +20,8 @@ LSTM + Word Embedding 实现诗词生成（预测）
     风雨秋花落江南南城南夜夜送友园山南寺
     ...
  
+··embedding_dim：300·· (偏小)
+
+··vocab_size:6325··
+
+··lstm_layer_num：3··
