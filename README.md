@@ -20,8 +20,8 @@ Word Embedding + LSTM 模型生成（预测）诗词
     风雨秋花落江南南城南夜夜送友园山南寺
     ...
  
-··embedding_dim：300·· (偏小)
+``embedding_dim：300`` (偏小)
 
-··vocab_size:6325··
+``vocab_size:6325``
 
-··lstm_layer_num：3··
+``lstm_layer_num：3``
