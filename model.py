@@ -61,7 +61,7 @@ class LSTMPredictor:
         self.initial_state = cell.zero_state(self.batch_size, tf.float32)
 
         '''
-        (outputs, state) = dynamic_rnn(cell，inputs,sequence_length=None,)
+        (outputs, state) = dynamic_rnn(cell,inputs,sequence_length=None,)
             outputs: 每个cell的输出
             states：表示最终的状态，也就是序列中最后一个cell输出的状态。
             

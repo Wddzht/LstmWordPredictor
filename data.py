@@ -1,19 +1,15 @@
-import numpy as np
 import pickle
 
 
-def get_batches(arr, n_seqs=32, n_steps=40):
-    batch_size = n_seqs * n_steps
-    n_batches = int(len(arr) / batch_size)
-    arr = arr[:batch_size * n_batches]
+def make_train_data(data):
+    for batch in data:
+        target = []
+        for seq in batch:
+            seq_target = seq[1:]
+            seq_target.append(0)  # 末尾用0补齐
+            target.append(seq_target)
 
-    arr = arr.reshape((n_seqs, -1))
-
-    for n in range(0, arr.shape[1], n_steps):
-        x = arr[:, n:n + n_steps]
-        y = np.zeros_like(x)
-        y[:, :-1], y[:, -1] = x[:, 1:], x[:, 0]
-        yield x, y
+        yield batch, target
 
 
 def make_vocab(string, vocab_path, min_count=-1):
@@ -22,7 +18,6 @@ def make_vocab(string, vocab_path, min_count=-1):
     :param min_count:
     :param vocab_path:
     :param string:
-    :param vocab: {'word':id,...}
     :return:
     """
     vocab = {}
@@ -81,16 +76,33 @@ def word2id(word, vocab):
         return 0
 
 
-def read_str_data(data_path, vocab):
+def read_str_data(data_path, vocab, len_seqs=40, n_seqs=32):
     input_file = open(data_path, encoding='utf8')
     data = input_file.readlines()
 
     input_str = ''
     for line in data:
         line = line.replace('\n', '')
+        line = line.replace('）', '')
+        line = line.replace('（', '')
+        line = line.split(':')[1]
         input_str += line
 
-    input_seqs = np.array([], dtype=np.int)
-    for ch in input_str:
-        input_seqs = np.append(input_seqs, word2id(ch, vocab))
-    return input_seqs
+    batch_size = n_seqs * len_seqs
+    n_batches = int(len(input_str) / batch_size)
+    max_index = batch_size * n_batches
+    output_seqs = []
+    index = 0
+
+    while index < max_index:
+        batches = []
+        while len(batches) < n_seqs:
+            current_seq = []
+            while len(current_seq) < len_seqs:
+                current_seq.append(word2id(input_str[index], vocab))
+                index += 1
+            batches.append(current_seq)
+        output_seqs.append(batches)
+
+    print("data length: {}\tbatch num: {}".format(len(input_str), n_batches))
+    return output_seqs

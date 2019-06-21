@@ -1,3 +1,4 @@
+# coding=utf-8
 import argparse
 import os
 import time
@@ -28,14 +29,14 @@ parser.add_argument('--mode', type=str, default='train', help='train/test/demo')
 parser.add_argument('--model_path', type=str, default='#', help='model path for test or demo')
 
 parser.add_argument('--batch_size', type=int, default=32, help='#sample of each mini batch')
-parser.add_argument('--epoch', type=int, default=35, help='#epoch of training')
+parser.add_argument('--epoch', type=int, default=45, help='#epoch of training')
 parser.add_argument('--hidden_dim', type=int, default=700, help='#dim of hidden state')  # todo: 是否需要?
 parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
 parser.add_argument('--clip', type=float, default=5.0, help='gradient clipping')
 parser.add_argument('--keep_prob', type=float, default=0.5, help='dropout keep_prob')
 parser.add_argument('--lstm_layer_num', type=int, default=3, help='lstm layer num')
 
-parser.add_argument('--embedding_dim', type=int, default=300, help='random init char embedding_dim')
+parser.add_argument('--embedding_dim', type=int, default=128, help='embedding size')
 parser.add_argument('--update_embedding', type=bool, default=True, help='update embedding during training True/False')
 parser.add_argument('--pretrained_embedding', type=str, default='random',
                     help='pretrained embedding path or init it randomly')
@@ -54,7 +55,7 @@ if args.mode == 'train':
     model_path = os.path.join(ckpt_path, "model")
 
     vocab = data.read_vocab(args.vocab_path)
-    encoded_seqs = data.read_str_data(args.data_path, vocab)
+    encoded_seqs = data.read_str_data(args.data_path, vocab, len_seqs=40, n_seqs=32)
 
     model = LSTMPredictor(batch_size=args.batch_size,
                           vocab_size=len(vocab),
@@ -71,7 +72,7 @@ if args.mode == 'train':
         new_state = sess.run(model.initial_state)
         counter = 0
         for epoch in range(args.epoch):
-            batches = data.get_batches(encoded_seqs, args.batch_size)
+            batches = data.make_train_data(encoded_seqs)
             for input_seqs, target_seqs in batches:
                 counter += 1
                 start = time.time()
@@ -79,17 +80,18 @@ if args.mode == 'train':
                              model.target_seqs: target_seqs,
                              model.keep_prob: args.keep_prob,
                              model.initial_state: new_state}
-                batch_loss, state, _ = sess.run([model.loss, model.final_state, model.optimizer], feed_dict=feed_dict)
+                batch_loss, new_state, _ = sess.run([model.loss, model.final_state, model.optimizer],
+                                                    feed_dict=feed_dict)
 
                 end = time.time()
 
-                if counter % 10 == 0:
-                    print('epoch: {}/{}... '.format(epoch + 1, args.epoch),
-                          'step: {}... '.format(counter),
-                          'err rate: {:.4f}... '.format(batch_loss),
+                if counter % 200 == 0:
+                    print('epoch: {}/{} '.format(epoch + 1, args.epoch),
+                          'step: {} '.format(counter),
+                          'err rate: {:.4f} '.format(batch_loss),
                           '{:.4f} sec/batch'.format((end - start)))
 
-                if counter % 100 == 0:
+                if counter % 1000 == 0:
                     saver.save(sess, model_path, counter)
 
         saver.save(sess, model_path, counter)
@@ -165,6 +167,4 @@ elif args.mode == 'demo':
 
 
     ckpt_file = tf.train.latest_checkpoint(args.model_path)
-
-    out = sample(ckpt_file, 100)
-    print(out)
+    sample(ckpt_file, 50)
